@@ -221,6 +221,52 @@ static const uint8_t* _yr_fetch_block_data(
 }
 
 
+
+static YR_MEMORY_BLOCK* _yr_test_mem_block_size_get_next_block(
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
+  if (0 == context->current_block.size) {
+    context->current_block.size = (context->buffer_size < yr_test_mem_block_size) ? context->buffer_size : yr_test_mem_block_size;
+  }
+  else {
+    context->current_block.base += (context->current_block.base < context->buffer_size) ? context->current_block.size : 0;
+    context->current_block.size  = ((context->buffer_size - context->current_block.base) < yr_test_mem_block_size) ? context->buffer_size - context->current_block.base : yr_test_mem_block_size;
+  }
+  YR_MEMORY_BLOCK* result = (context->current_block.base < context->buffer_size) ? &context->current_block : NULL;
+
+  if (yr_test_verbosity)
+    fprintf(stderr, "+ %s() {} // .base=0x%lx of 0x%lx or %'lu .size=%'lu%s\n", __FUNCTION__, context->current_block.base, context->buffer_size, context->buffer_size, context->current_block.size, context->current_block.size ? "" : " AKA block end");
+
+  return result;
+}
+
+
+static YR_MEMORY_BLOCK* _yr_test_mem_block_size_get_first_block(
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  if (yr_test_verbosity)
+    fprintf(stderr, "+ %s() {} // wrapping _yr_test_mem_block_size_get_next_block()\n", __FUNCTION__);
+
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
+  context->current_block.base = 0;
+  context->current_block.size = 0;
+  return _yr_test_mem_block_size_get_next_block(iterator);
+}
+
+
+static const uint8_t* _yr_test_mem_block_size_fetch_block_data(
+    YR_MEMORY_BLOCK* block)
+{
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
+
+  if (yr_test_verbosity)
+    fprintf(stderr, "+ %s() {} = %p = %p + 0x%lx\n", __FUNCTION__, context->buffer + context->current_block.base, context->buffer, context->current_block.base);
+
+  return context->buffer + context->current_block.base;
+}
+
+
 YR_API int yr_rules_scan_mem(
     YR_RULES* rules,
     const uint8_t* buffer,
@@ -232,15 +278,35 @@ YR_API int yr_rules_scan_mem(
 {
   YR_MEMORY_BLOCK block;
   YR_MEMORY_BLOCK_ITERATOR iterator;
+  YR_PROC_ITERATOR_CTX context;
 
-  block.size = buffer_size;
-  block.base = 0;
-  block.fetch_data = _yr_fetch_block_data;
-  block.context = (void*) buffer;
+  if (yr_test_mem_block_size)
+  {
+    if (yr_test_verbosity)
+      fprintf(stderr, "+ %s(buffer=%p buffer_size=%'lu) {} // yr_test_mem_block_size=%'lu\n", __FUNCTION__, buffer, buffer_size, yr_test_mem_block_size);
 
-  iterator.context = &block;
-  iterator.first = _yr_get_first_block;
-  iterator.next = _yr_get_next_block;
+    iterator.context = &context;
+    iterator.first = _yr_test_mem_block_size_get_first_block;
+    iterator.next = _yr_test_mem_block_size_get_next_block;
+
+    context.buffer = buffer;
+    context.buffer_size = buffer_size;
+    context.current_block.base = 0;
+    context.current_block.size = 0;
+    context.current_block.context = &context;
+    context.current_block.fetch_data = _yr_test_mem_block_size_fetch_block_data;
+  }
+  else
+  {
+    block.size = buffer_size;
+    block.base = 0;
+    block.fetch_data = _yr_fetch_block_data;
+    block.context = (void*) buffer;
+
+    iterator.context = &block;
+    iterator.first = _yr_get_first_block;
+    iterator.next = _yr_get_next_block;
+  }
 
   return yr_rules_scan_mem_blocks(
       rules,
@@ -320,6 +386,9 @@ YR_API int yr_rules_scan_proc(
     void* user_data,
     int timeout)
 {
+  if (yr_test_verbosity)
+    fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   YR_MEMORY_BLOCK_ITERATOR iterator;
 
   int result = yr_process_open_iterator(

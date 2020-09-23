@@ -39,6 +39,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern uint8_t yr_lowercase[256];
 extern uint8_t yr_altercase[256];
 
+// Default is 0 for production, which means use 1 block for contiguous memory.
+// For testing, 1024 means split contiguous memory into max 1024 byte blocks.
+// See https://github.com/VirusTotal/yara/issues/1356
+extern uint64_t yr_test_mem_block_size;
+
+// Default is 0 for production, which means be silent, else verbose.
+extern uint64_t yr_test_verbosity;
 
 // Thread-local storage (TLS) key used by the regexp and hex string parsers.
 // Each thread calling yr_parse_re_string/yr_parse_hex_string stores a pointer

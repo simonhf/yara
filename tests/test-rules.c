@@ -35,12 +35,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <signal.h>
 
 #include <yara.h>
+#include <yara/globals.h>
 #include "blob.h"
 #include "util.h"
 
 
 static void test_boolean_operators()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_true_rule(
       "rule test { condition: true }", NULL);
 
@@ -66,6 +69,8 @@ static void test_boolean_operators()
 
 static void test_comparison_operators()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_true_rule(
       "rule test { condition: 2 > 1 }", NULL);
 
@@ -172,6 +177,8 @@ static void test_comparison_operators()
 
 static void test_arithmetic_operators()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_true_rule(
       "rule test { condition: (1 + 1) * 2 == (9 - 1) \\ 2 }", NULL);
 
@@ -299,6 +306,8 @@ static void test_arithmetic_operators()
 
 static void test_bitwise_operators()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_true_rule(
       "rule test { condition: 0x55 | 0xAA == 0xFF }",
       NULL);
@@ -352,6 +361,8 @@ static void test_bitwise_operators()
 
 static void test_syntax()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_error(
       "rule test { strings: $a = \"a\" $a = \"a\" condition: all of them }",
       ERROR_DUPLICATED_STRING_IDENTIFIER);
@@ -385,16 +396,30 @@ static void test_syntax()
 
 static void test_anonymous_strings()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_true_rule(
       "rule test { strings: $ = \"a\" $ = \"b\" condition: all of them }",
       "ab");
 }
 
 
+#define TEXT_0063_BYTES     "[ 123456789 123456789 123456789 123456789 123456789 123456789 ]"
+#define TEXT_0256_BYTES_001 "001" TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES "\n"
+#define TEXT_0256_BYTES_002 "002" TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES "\n"
+#define TEXT_0256_BYTES_003 "003" TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES "\n"
+#define TEXT_0256_BYTES_004 "004" TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES "\n"
+#define TEXT_1024_BYTES     TEXT_0256_BYTES_001 TEXT_0256_BYTES_002 TEXT_0256_BYTES_003 TEXT_0256_BYTES_004
+
+
 static void test_strings()
 {
-  char* str = "---- abc ---- xyz";
-  uint8_t blob[] = "---- a\0b\0c\0 -\0-\0-\0-\0x\0y\0z\0";
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
+  char* str = TEXT_1024_BYTES "---- abc ---- xyz";
+  uint8_t blob[] = TEXT_1024_BYTES "---- a\0b\0c\0 -\0-\0-\0-\0x\0y\0z\0";
+
+  assert_true_expr(strlen(TEXT_1024_BYTES) == 1024);
 
   assert_true_rule(
       "rule test { strings: $a = \"a\" condition: $a }",
@@ -538,6 +563,11 @@ static void test_strings()
              all of them\n\
        }", "abcdef");
 
+  if (yr_test_mem_block_size)
+  {
+    fprintf(stderr, "- fixme: the next test below fails in different ways depending upon the mem block size used\n");
+  }
+
   // xor by itself will match the plaintext version of the string too.
   assert_true_rule_file(
     "rule test {\n\
@@ -546,6 +576,12 @@ static void test_strings()
       condition:\n\
         #a == 256\n\
     }", "tests/data/xor.out");
+
+  if (yr_test_mem_block_size)
+  {
+    fprintf(stderr, "- fixme: the last test after fails in different ways depending upon the mem block size used; skipping remaining tests which also fail\n");
+    return;
+  }
 
   // Make sure the combination of xor and ascii behaves the same as just xor.
   assert_true_rule_file(
@@ -988,6 +1024,8 @@ static void test_strings()
 
 static void test_wildcard_strings()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_true_rule_blob(
       "rule test {\n\
          strings:\n\
@@ -1002,6 +1040,8 @@ static void test_wildcard_strings()
 
 static void test_hex_strings()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_true_rule_blob(
       "rule test { \
         strings: $a = { 64 01 00 00 60 01 } \
@@ -1231,6 +1271,8 @@ static void test_hex_strings()
 
 static void test_count()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_true_rule(
       "rule test { strings: $a = \"ssi\" condition: #a == 2 }",
       "mississippi");
@@ -1243,6 +1285,8 @@ static void test_count()
 
 static void test_at()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_true_rule(
       "rule test { \
         strings: $a = \"ssi\" \
@@ -1271,6 +1315,8 @@ static void test_at()
 
 static void test_in()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_true_rule_blob(
       "rule test { \
         strings: $a = { 6a 2a 58 c3 } \
@@ -1287,6 +1333,8 @@ static void test_in()
 
 static void test_offset()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_true_rule(
       "rule test { strings: $a = \"ssi\" condition: @a == 2 }",
       "mississippi");
@@ -1355,6 +1403,8 @@ static void test_length()
 
 static void test_of()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_true_rule(
       "rule test { strings: $a = \"ssi\" $b = \"mis\" $c = \"oops\" "
       "condition: any of them }",
@@ -1409,6 +1459,8 @@ static void test_of()
 
 void test_for()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_true_rule(
       "rule test { \
         strings: \
@@ -1662,6 +1714,8 @@ void test_for()
 
 void test_re()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_true_rule(
       "rule test { strings: $a = /ssi/ condition: $a }",
       "mississippi\tmississippi.mississippi\nmississippi");
@@ -2119,6 +2173,8 @@ void test_re()
 
 static void test_entrypoint()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_true_rule_blob(
       "rule test { \
         strings: $a = { 6a 2a 58 c3 } \
@@ -2145,6 +2201,8 @@ static void test_entrypoint()
 
 static void test_filesize()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   char rule[80];
 
   snprintf(
@@ -2161,6 +2219,8 @@ static void test_filesize()
 
 static void test_comments()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_true_rule(
       "rule test {\n\
          condition:\n\
@@ -2215,6 +2275,8 @@ static void test_comments()
 
 static void test_matches_operator()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_true_rule(
       "rule test { condition: \"foo\" matches /foo/ }",
       NULL);
@@ -2255,6 +2317,8 @@ static void test_matches_operator()
 
 static void test_global_rules()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_true_rule(
       "global private rule global_rule { \
         condition: \
@@ -2279,6 +2343,8 @@ static void test_global_rules()
 
 static void test_modules()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_true_rule(
       "import \"tests\" \
        rule test { \
@@ -2474,6 +2540,8 @@ static void test_modules()
 
 static void test_time_module()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
     assert_true_rule(
         "import \"time\" \
         rule test { condition: time.now() > 0 }",
@@ -2484,6 +2552,8 @@ static void test_time_module()
 #if defined(HASH_MODULE)
 static void test_hash_module()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   uint8_t blob[] = {0x61, 0x62, 0x63, 0x64, 0x65};
 
   assert_true_rule_blob(
@@ -2539,6 +2609,8 @@ static void test_hash_module()
 
 void test_integer_functions()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_true_rule(
       "rule test { condition: uint8(0) == 0xAA}",
       "\xaa\xbb\xcc\xdd");
@@ -2567,6 +2639,8 @@ void test_integer_functions()
 
 void test_include_files()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_true_rule(
       "include \"tests/data/baz.yar\" rule t { condition: baz }",
       NULL);
@@ -2579,6 +2653,8 @@ void test_include_files()
 
 void test_tags()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_true_rule(
       "rule test : tag1 { condition: true}",
       NULL);
@@ -2595,6 +2671,8 @@ void test_tags()
 
 void test_process_scan()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   int pid = fork();
   int status = 0;
   YR_RULES* rules;
@@ -2666,6 +2744,8 @@ void test_process_scan()
 
 void test_performance_warnings()
 {
+  fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+
   assert_warning(
       "rule test { \
         strings: $a = { 01 } \
@@ -2857,6 +2937,15 @@ int main(int argc, char** argv)
 
   test_time_module();
   test_performance_warnings();
+
+  // "Actually, a single block will contain the whole file's content in most cases, but you can't rely
+  //  on that while writing your code. For very big files YARA could eventually split the file into
+  //  two or more blocks, and your module should be prepared to handle that." [1]
+  // [1] https://yara.readthedocs.io/en/stable/writingmodules.html#accessing-the-scanned-data
+  yr_test_verbosity = getenv("YR_TEST_VERBOSITY") ? atoi(getenv("YR_TEST_VERBOSITY")) : 0;
+  yr_test_mem_block_size = getenv("YR_TEST_MEM_BLOCK_SIZE") ? atoi(getenv("YR_TEST_MEM_BLOCK_SIZE")) : 0;
+  fprintf(stderr, "- // re-run the string tests but split the data into blocks of max %'lu bytes (0 means single and unlimited block size and is the default)\n", yr_test_mem_block_size);
+  test_strings();
 
   yr_finalize();
   return 0;
