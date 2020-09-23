@@ -280,14 +280,14 @@ static int _yr_scan_add_match_to_list(
 
   if (matches_list->count == YR_MAX_STRING_MATCHES)
   {
-    //fixme return ERROR_TOO_MANY_MATCHES;
     result = ERROR_TOO_MANY_MATCHES;
     goto EARLY_OUT;
   }
 
   while (insertion_point != NULL)
   {
-    if (match->offset == insertion_point->offset)
+    if ((match->base == insertion_point->base) &&
+        (match->offset == insertion_point->offset))
     {
       if (replace_if_exists)
       {
@@ -296,8 +296,7 @@ static int _yr_scan_add_match_to_list(
         insertion_point->data = match->data;
       }
 
-      //fixme return ERROR_SUCCESS;
-      goto EARLY_OUT;
+      goto EARLY_OUT; // return ERROR_SUCCESS
     }
 
     if (match->offset > insertion_point->offset)
@@ -329,7 +328,7 @@ static int _yr_scan_add_match_to_list(
   EARLY_OUT:;
 
   if (yr_test_verbosity)
-    fprintf(stderr, "+ %s(replace_if_exists=%d) {} = %d // matches_list->count=%'u += %'u\n", __FUNCTION__, replace_if_exists, result, count_orig, matches_list->count - count_orig);
+    fprintf(stderr, "+ %s(replace_if_exists=%d) {} = %d // match->base=0x%lx match->offset=%'lu matches_list->count=%'u += %'u\n", __FUNCTION__, replace_if_exists, result, match->base, match->offset, count_orig, matches_list->count - count_orig);
 
   return result;
 }
@@ -621,23 +620,23 @@ static int _yr_scan_match_callback(
       if (match_offset >= 2 &&
           *(match_data - 1) == 0 &&
           isalnum(*(match_data - 2)))
-        goto EARLY_OUT; //fixme return ERROR_SUCCESS;
+        goto EARLY_OUT; // return ERROR_SUCCESS;
 
 
       if (match_offset + match_length + 1 < callback_args->data_size &&
           *(match_data + match_length + 1) == 0 &&
           isalnum(*(match_data + match_length)))
-        goto EARLY_OUT; //fixme return ERROR_SUCCESS;
+        goto EARLY_OUT; // return ERROR_SUCCESS;
     }
     else
     {
       if (match_offset >= 1 &&
           isalnum(*(match_data - 1)))
-        goto EARLY_OUT; //fixme return ERROR_SUCCESS;
+        goto EARLY_OUT; // return ERROR_SUCCESS;
 
       if (match_offset + match_length < callback_args->data_size &&
           isalnum(*(match_data + match_length)))
-        goto EARLY_OUT; //fixme return ERROR_SUCCESS;
+        goto EARLY_OUT; // return ERROR_SUCCESS;
     }
   }
 
@@ -665,7 +664,7 @@ static int _yr_scan_match_callback(
     if (new_match == NULL)
     {
       result = ERROR_INSUFFICIENT_MEMORY;
-      goto EARLY_OUT; //fixme return ERROR_INSUFFICIENT_MEMORY;
+      goto EARLY_OUT;
     }
 
     new_match->data_length = yr_min(match_length, max_match_data);
@@ -678,7 +677,7 @@ static int _yr_scan_match_callback(
       if (new_match->data == NULL)
       {
         result = ERROR_INSUFFICIENT_MEMORY;
-        goto EARLY_OUT; //fixme return ERROR_INSUFFICIENT_MEMORY;
+        goto EARLY_OUT;
       }
 
       memcpy(
