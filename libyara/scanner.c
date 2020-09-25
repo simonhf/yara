@@ -48,8 +48,8 @@ static int _yr_scanner_scan_mem_block(
     const uint8_t* block_data,
     YR_MEMORY_BLOCK* block)
 {
-  if (yr_test_verbosity)
-    fprintf(stderr, "+ %s(block_data=%p block->base=0x%lx block->size=%'lu) {}\n", __FUNCTION__, block_data, block->base, block->size);
+  YR_TEST_FPRINTF(2, stderr, "+ %s(block_data=%p block->base=0x%lx block->size=%'lu) {}\n",
+    __FUNCTION__, block_data, block->base, block->size);
 
   YR_RULES* rules = scanner->rules;
   YR_AC_TRANSITION* transition_table = rules->ac_transition_table;
@@ -70,9 +70,12 @@ static int _yr_scanner_scan_mem_block(
         return ERROR_SCAN_TIMEOUT;
     }
 
-    if (yr_test_verbosity)
-      if (0 != state)
-        fprintf(stderr, "- match_table[state=%u]=%'u i=%'ld block_data=%p block->base=0x%lx // %s()\n", state, match_table[state], i, block_data, block->base, __FUNCTION__);
+    #if 2 == YR_TEST_VERBOSITY
+    if (0 != state)
+      YR_TEST_FPRINTF(2, stderr, "- match_table[state=%u]=%'u i=%'ld "
+        "block_data=%p block->base=0x%lx // %s()\n",
+        state, match_table[state], i, block_data, block->base, __FUNCTION__);
+    #endif
 
     if (match_table[state] != 0)
     {
@@ -170,8 +173,7 @@ YR_API int yr_scanner_create(
     YR_RULES* rules,
     YR_SCANNER** scanner)
 {
-  if (yr_test_verbosity)
-    fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_TEST_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
 
   YR_EXTERNAL_VARIABLE* external;
   YR_SCANNER* new_scanner;
@@ -252,8 +254,7 @@ YR_API int yr_scanner_create(
 YR_API void yr_scanner_destroy(
     YR_SCANNER* scanner)
 {
-  if (yr_test_verbosity)
-    fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_TEST_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
 
   RE_FIBER* fiber;
   RE_FIBER* next_fiber;
@@ -395,8 +396,7 @@ YR_API int yr_scanner_scan_mem_blocks(
     YR_SCANNER* scanner,
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  if (yr_test_verbosity)
-    fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_TEST_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
 
   YR_RULES* rules;
   YR_RULE* rule;

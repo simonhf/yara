@@ -203,6 +203,7 @@ YR_API int yr_rules_scan_mem_blocks(
 static YR_MEMORY_BLOCK* _yr_get_first_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
+  yr_test_count_get_block ++;
   return (YR_MEMORY_BLOCK*) iterator->context;
 }
 
@@ -210,6 +211,7 @@ static YR_MEMORY_BLOCK* _yr_get_first_block(
 static YR_MEMORY_BLOCK* _yr_get_next_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
+  yr_test_count_get_block ++;
   return NULL;
 }
 
@@ -226,17 +228,48 @@ static YR_MEMORY_BLOCK* _yr_test_mem_block_size_get_next_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
+
+  YR_MEMORY_BLOCK* result;
+  uint64_t overlap;
+
+  yr_test_count_get_block ++;
+
   if (0 == context->current_block.size) {
-    context->current_block.size = (context->buffer_size < yr_test_mem_block_size) ? context->buffer_size : yr_test_mem_block_size;
+    overlap = 0;
+    context->current_block.size =
+      (context->buffer_size < yr_test_mem_block_size) ?
+       context->buffer_size :
+       yr_test_mem_block_size;
+    result = &context->current_block;
   }
   else {
-    context->current_block.base += (context->current_block.base < context->buffer_size) ? context->current_block.size : 0;
-    context->current_block.size  = ((context->buffer_size - context->current_block.base) < yr_test_mem_block_size) ? context->buffer_size - context->current_block.base : yr_test_mem_block_size;
+    overlap = yr_test_mem_block_size_overlap;
+    context->current_block.base +=
+      (0 == context->current_block.base) ?
+       0 :
+       overlap;
+    context->current_block.base +=
+      (context->current_block.base < context->buffer_size) ?
+       yr_test_mem_block_size :
+       0;
+    result = (context->current_block.base < context->buffer_size) ?
+             &context->current_block : NULL;
+    context->current_block.size =
+      ((context->buffer_size - context->current_block.base) < yr_test_mem_block_size) ?
+        context->buffer_size - context->current_block.base + overlap :
+        yr_test_mem_block_size + overlap;
+    context->current_block.base -= overlap;
   }
-  YR_MEMORY_BLOCK* result = (context->current_block.base < context->buffer_size) ? &context->current_block : NULL;
 
-  if (yr_test_verbosity)
-    fprintf(stderr, "+ %s() {} // .base=0x%lx of 0x%lx or %'lu .size=%'lu%s\n", __FUNCTION__, context->current_block.base, context->buffer_size, context->buffer_size, context->current_block.size, context->current_block.size ? "" : " AKA block end");
+  YR_TEST_FPRINTF(2, stderr, "+ %s() {} = %p // "
+    ".base=(0x%lx or %'lu) of (0x%lx or %'lu) .size=%'lu, both including %'lu block overlap%s\n",
+    __FUNCTION__, result,
+    context->current_block.base,
+    context->current_block.base,
+    context->buffer_size,
+    context->buffer_size,
+    context->current_block.size,
+    overlap, overlap ? "" : " (note: 1st block overlap always 0)");
 
   return result;
 }
@@ -245,8 +278,10 @@ static YR_MEMORY_BLOCK* _yr_test_mem_block_size_get_next_block(
 static YR_MEMORY_BLOCK* _yr_test_mem_block_size_get_first_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  if (yr_test_verbosity)
-    fprintf(stderr, "+ %s() {} // wrapping _yr_test_mem_block_size_get_next_block()\n", __FUNCTION__);
+  YR_TEST_FPRINTF(2, stderr, "+ %s() {} // "
+    "wrapping _yr_test_mem_block_size_get_next_block()\n", __FUNCTION__);
+
+  yr_test_count_get_block ++;
 
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
   context->current_block.base = 0;
@@ -260,8 +295,15 @@ static const uint8_t* _yr_test_mem_block_size_fetch_block_data(
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
 
-  if (yr_test_verbosity)
-    fprintf(stderr, "+ %s() {} = %p = %p + 0x%lx\n", __FUNCTION__, context->buffer + context->current_block.base, context->buffer, context->current_block.base);
+  #if YR_TEST_VERBOSITY > 0
+  uint64_t overlap = context->current_block.base > 0 ? yr_test_mem_block_size_overlap : 0;
+  #endif
+  YR_TEST_FPRINTF(2, stderr, "+ %s() {} = %p = %p + 0x%lx base including %'lu overlap%s\n",
+    __FUNCTION__,
+    context->buffer + context->current_block.base - overlap,
+    context->buffer,
+    context->current_block.base,
+    overlap, overlap ? "" : " (note: 1st block overlap always 0)");
 
   return context->buffer + context->current_block.base;
 }
@@ -282,8 +324,12 @@ YR_API int yr_rules_scan_mem(
 
   if (yr_test_mem_block_size)
   {
-    if (yr_test_verbosity)
-      fprintf(stderr, "+ %s(buffer=%p buffer_size=%'lu) {} // yr_test_mem_block_size=%'lu\n", __FUNCTION__, buffer, buffer_size, yr_test_mem_block_size);
+    YR_TEST_FPRINTF(2, stderr, "+ %s(buffer=%p buffer_size=%'lu) {} // "
+      "yr_test_mem_block_size=%'lu\n",
+       __FUNCTION__,
+       buffer,
+       buffer_size,
+       yr_test_mem_block_size);
 
     iterator.context = &context;
     iterator.first = _yr_test_mem_block_size_get_first_block;
@@ -386,8 +432,7 @@ YR_API int yr_rules_scan_proc(
     void* user_data,
     int timeout)
 {
-  if (yr_test_verbosity)
-    fprintf(stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_TEST_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
 
   YR_MEMORY_BLOCK_ITERATOR iterator;
 

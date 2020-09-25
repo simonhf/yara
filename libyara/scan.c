@@ -87,8 +87,8 @@ static int _yr_scan_xor_compare(
 
   EARLY_OUT:;
 
-  if (yr_test_verbosity)
-    fprintf(stderr, "+ %s(data_size=%'lu string_length=%'ld) {} = %d\n", __FUNCTION__, data_size, string_length, result);
+  YR_TEST_FPRINTF(2, stderr, "+ %s(data_size=%'lu string_length=%'ld) {} = %d\n",
+    __FUNCTION__, data_size, string_length, result);
 
   return result;
 }
@@ -192,8 +192,8 @@ static int _yr_scan_wcompare(
 
   EARLY_OUT:;
 
-  if (yr_test_verbosity)
-    fprintf(stderr, "+ %s(data_size=%'lu string_length=%'ld) {} = %d\n", __FUNCTION__, data_size, string_length, result);
+  YR_TEST_FPRINTF(2, stderr, "+ %s(data_size=%'lu string_length=%'ld) {} = %d\n",
+    __FUNCTION__, data_size, string_length, result);
 
   return result;
 }
@@ -227,8 +227,8 @@ static int _yr_scan_wicompare(
 
   EARLY_OUT:;
 
-  if (yr_test_verbosity)
-    fprintf(stderr, "+ %s(data_size=%'lu string_length=%'ld) {} = %d\n", __FUNCTION__, data_size, string_length, result);
+  YR_TEST_FPRINTF(2, stderr, "+ %s(data_size=%'lu string_length=%'ld) {} = %d\n",
+    __FUNCTION__, data_size, string_length, result);
 
   return result;
 }
@@ -274,7 +274,10 @@ static int _yr_scan_add_match_to_list(
     int replace_if_exists)
 {
   int result = ERROR_SUCCESS;
+
+  #if YR_TEST_VERBOSITY > 0
   int32_t count_orig = matches_list->count;
+  #endif
 
   YR_MATCH* insertion_point = matches_list->tail;
 
@@ -286,8 +289,7 @@ static int _yr_scan_add_match_to_list(
 
   while (insertion_point != NULL)
   {
-    if ((match->base == insertion_point->base) &&
-        (match->offset == insertion_point->offset))
+    if ((match->base + match->offset) == (insertion_point->base + insertion_point->offset))
     {
       if (replace_if_exists)
       {
@@ -299,7 +301,7 @@ static int _yr_scan_add_match_to_list(
       goto EARLY_OUT; // return ERROR_SUCCESS
     }
 
-    if (match->offset > insertion_point->offset)
+    if ((match->base + match->offset) > (insertion_point->base + insertion_point->offset))
       break;
 
     insertion_point = insertion_point->prev;
@@ -327,8 +329,10 @@ static int _yr_scan_add_match_to_list(
 
   EARLY_OUT:;
 
-  if (yr_test_verbosity)
-    fprintf(stderr, "+ %s(replace_if_exists=%d) {} = %d // match->base=0x%lx match->offset=%'lu matches_list->count=%'u += %'u\n", __FUNCTION__, replace_if_exists, result, match->base, match->offset, count_orig, matches_list->count - count_orig);
+  YR_TEST_FPRINTF(2, stderr, "+ %s(replace_if_exists=%d) {} = %d // "
+    "match->base=0x%lx match->offset=%'lu matches_list->count=%'u += %'u\n",
+    __FUNCTION__, replace_if_exists, result, match->base, match->offset, count_orig,
+    matches_list->count - count_orig);
 
   return result;
 }
@@ -378,6 +382,10 @@ static int _yr_scan_verify_chained_string_match(
     uint64_t match_offset,
     int32_t match_length)
 {
+  YR_TEST_FPRINTF(2, stderr, "+ %s"
+    "(match_data=%p match_base=%lx match_offset=0x%'lu match_length=%'d) {}\n",
+    __FUNCTION__, match_data, match_base, match_offset, match_length);
+
   YR_STRING* string;
   YR_MATCH* match;
   YR_MATCH* next_match;
@@ -604,8 +612,18 @@ static int _yr_scan_match_callback(
 
   size_t match_offset = match_data - callback_args->data;
 
-  if (yr_test_verbosity)
-    fprintf(stderr, "+ %s(match_data=%p match_length=%'d) { // match_offset=%'ld args->data=%p args->string.length=%'u args->data_base=0x%lx args->data_size=%'lu args->forward_matches=%'u\n", __FUNCTION__, match_data, match_length, match_offset, callback_args->data, callback_args->string->length, callback_args->data_base, callback_args->data_size, callback_args->forward_matches);
+  YR_TEST_FPRINTF(2, stderr, "+ %s(match_data=%p match_length=%'d) { // "
+    "match_offset=%'ld args->data=%p args->string.length=%'u "
+    "args->data_base=0x%lx args->data_size=%'lu args->forward_matches=%'u\n",
+    __FUNCTION__,
+    match_data,
+    match_length,
+    match_offset,
+    callback_args->data,
+    callback_args->string->length,
+    callback_args->data_base,
+    callback_args->data_size,
+    callback_args->forward_matches);
 
   // total match length is the sum of backward and forward matches.
   match_length += callback_args->forward_matches;
@@ -708,8 +726,7 @@ static int _yr_scan_match_callback(
 
   EARLY_OUT:;
 
-  if (yr_test_verbosity)
-    fprintf(stderr, "} // %s() = %d\n", __FUNCTION__, result);
+  YR_TEST_FPRINTF(2, stderr, "} // %s() = %d\n", __FUNCTION__, result);
 
   return result;
 }
@@ -735,8 +752,8 @@ static int _yr_scan_verify_re_match(
     uint64_t data_base,
     size_t offset)
 {
-  if (yr_test_verbosity)
-    fprintf(stderr, "+ %s(data=%p data_size=%'lu data_base=0x%lx offset=%'ld) {}\n", __FUNCTION__, data, data_size, data_base, offset);
+  YR_TEST_FPRINTF(2, stderr, "+ %s(data=%p data_size=%'lu data_base=0x%lx offset=%'ld) {}\n",
+    __FUNCTION__, data, data_size, data_base, offset);
 
   CALLBACK_ARGS callback_args;
   RE_EXEC_FUNC exec;
@@ -837,8 +854,8 @@ static int _yr_scan_verify_literal_match(
     uint64_t data_base,
     size_t offset)
 {
-  if (yr_test_verbosity)
-    fprintf(stderr, "+ %s(data=%p data_size=%'lu data_base=0x%lx offset=%'ld) {}\n", __FUNCTION__, data, data_size, data_base, offset);
+  YR_TEST_FPRINTF(2, stderr, "+ %s(data=%p data_size=%'lu data_base=0x%lx offset=%'ld) {}\n",
+    __FUNCTION__, data, data_size, data_base, offset);
 
   int flags = 0;
   int forward_matches = 0;
@@ -945,8 +962,8 @@ int yr_scan_verify_match(
     uint64_t data_base,
     size_t offset)
 {
-  if (yr_test_verbosity)
-    fprintf(stderr, "+ %s(data=%p data_size=%'lu data_base=0x%lx offset=%'ld)\n", __FUNCTION__, data, data_size, data_base, offset);
+  YR_TEST_FPRINTF(2, stderr, "+ %s(data=%p data_size=%'lu data_base=0x%lx offset=%'ld)\n",
+    __FUNCTION__, data, data_size, data_base, offset);
 
   YR_STRING* string = ac_match->string;
 

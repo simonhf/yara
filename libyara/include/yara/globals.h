@@ -44,8 +44,29 @@ extern uint8_t yr_altercase[256];
 // See https://github.com/VirusTotal/yara/issues/1356
 extern uint64_t yr_test_mem_block_size;
 
+// If yr_test_mem_block_size is non-zero, this specifies the bytes of the
+// previous memory block to include in the current memory block.
+extern uint64_t yr_test_mem_block_size_overlap;
+
+// Counts calls to 'get first / next block' function for testing purposes.
+extern uint64_t yr_test_count_get_block;
+
+#if 0 == YR_TEST_VERBOSITY
+
+#define YR_TEST_FPRINTF(VERBOSITY, FORMAT, ...)
+
+#else
+
+#define YR_TEST_FPRINTF(VERBOSITY, FORMAT, ...) \
+  if (yr_test_verbosity >= VERBOSITY) \
+  { \
+      fprintf(FORMAT, __VA_ARGS__); \
+  }
+
 // Default is 0 for production, which means be silent, else verbose.
 extern uint64_t yr_test_verbosity;
+
+#endif
 
 // Thread-local storage (TLS) key used by the regexp and hex string parsers.
 // Each thread calling yr_parse_re_string/yr_parse_hex_string stores a pointer
