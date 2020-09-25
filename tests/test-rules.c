@@ -42,7 +42,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static void test_boolean_operators()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { condition: true }", NULL);
@@ -69,7 +69,7 @@ static void test_boolean_operators()
 
 static void test_comparison_operators()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { condition: 2 > 1 }", NULL);
@@ -177,7 +177,7 @@ static void test_comparison_operators()
 
 static void test_arithmetic_operators()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { condition: (1 + 1) * 2 == (9 - 1) \\ 2 }", NULL);
@@ -306,7 +306,7 @@ static void test_arithmetic_operators()
 
 static void test_bitwise_operators()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { condition: 0x55 | 0xAA == 0xFF }",
@@ -361,7 +361,7 @@ static void test_bitwise_operators()
 
 static void test_syntax()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_error(
       "rule test { strings: $a = \"a\" $a = \"a\" condition: all of them }",
@@ -396,7 +396,7 @@ static void test_syntax()
 
 static void test_anonymous_strings()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { strings: $ = \"a\" $ = \"b\" condition: all of them }",
@@ -414,7 +414,7 @@ static void test_anonymous_strings()
 
 static void test_strings()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   char* str = TEXT_1024_BYTES "---- abc ---- xyz";
   uint8_t blob[] = TEXT_1024_BYTES "---- a\0b\0c\0 -\0-\0-\0-\0x\0y\0z\0";
@@ -1013,7 +1013,7 @@ static void test_strings()
 
 static void test_wildcard_strings()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule_blob(
       "rule test {\n\
@@ -1029,7 +1029,7 @@ static void test_wildcard_strings()
 
 static void test_hex_strings()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule_blob(
       "rule test { \
@@ -1260,7 +1260,7 @@ static void test_hex_strings()
 
 static void test_count()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { strings: $a = \"ssi\" condition: #a == 2 }",
@@ -1274,7 +1274,7 @@ static void test_count()
 
 static void test_at()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { \
@@ -1304,7 +1304,7 @@ static void test_at()
 
 static void test_in()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule_blob(
       "rule test { \
@@ -1322,7 +1322,7 @@ static void test_in()
 
 static void test_offset()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { strings: $a = \"ssi\" condition: @a == 2 }",
@@ -1344,7 +1344,7 @@ static void test_offset()
 
 static void test_length()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { strings: $a = /m.*?ssi/ condition: !a == 5 }",
@@ -1394,7 +1394,7 @@ static void test_length()
 
 static void test_of()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { strings: $a = \"ssi\" $b = \"mis\" $c = \"oops\" "
@@ -1450,7 +1450,7 @@ static void test_of()
 
 void test_for()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { \
@@ -1705,7 +1705,7 @@ void test_for()
 
 void test_re()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { strings: $a = /ssi/ condition: $a }",
@@ -2164,7 +2164,7 @@ void test_re()
 
 static void test_entrypoint()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule_blob(
       "rule test { \
@@ -2192,7 +2192,7 @@ static void test_entrypoint()
 
 static void test_filesize()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   char rule[80];
 
@@ -2210,7 +2210,7 @@ static void test_filesize()
 
 static void test_comments()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test {\n\
@@ -2266,7 +2266,7 @@ static void test_comments()
 
 static void test_matches_operator()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { condition: \"foo\" matches /foo/ }",
@@ -2308,7 +2308,7 @@ static void test_matches_operator()
 
 static void test_global_rules()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule(
       "global private rule global_rule { \
@@ -2334,7 +2334,7 @@ static void test_global_rules()
 
 static void test_modules()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule(
       "import \"tests\" \
@@ -2531,7 +2531,7 @@ static void test_modules()
 
 static void test_time_module()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
     assert_true_rule(
         "import \"time\" \
@@ -2543,7 +2543,7 @@ static void test_time_module()
 #if defined(HASH_MODULE)
 static void test_hash_module()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   uint8_t blob[] = {0x61, 0x62, 0x63, 0x64, 0x65};
 
@@ -2600,7 +2600,7 @@ static void test_hash_module()
 
 void test_integer_functions()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { condition: uint8(0) == 0xAA}",
@@ -2630,7 +2630,7 @@ void test_integer_functions()
 
 void test_include_files()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule(
       "include \"tests/data/baz.yar\" rule t { condition: baz }",
@@ -2644,7 +2644,7 @@ void test_include_files()
 
 void test_tags()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test : tag1 { condition: true}",
@@ -2662,7 +2662,7 @@ void test_tags()
 
 void test_process_scan()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   int pid = fork();
   int status = 0;
@@ -2735,7 +2735,7 @@ void test_process_scan()
 
 void test_performance_warnings()
 {
-  YR_TEST_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_warning(
       "rule test { \
@@ -2884,25 +2884,33 @@ int main(int argc, char** argv)
 
   yr_initialize();
 
-  #if YR_TEST_VERBOSITY > 0
-  yr_test_verbosity = getenv("YR_TEST_VERBOSITY") ? atoi(getenv("YR_TEST_VERBOSITY")) : 0;
+  #if YR_DEBUG_VERBOSITY > 0
+  yr_debug_verbosity = getenv("YR_DEBUG_VERBOSITY") ? atoi(getenv("YR_DEBUG_VERBOSITY")) : 0;
   #endif
+
+  yr_rules_scan_mem = &_yr_test_single_or_multi_block_rules_scan_mem;
 
   uint64_t last_yr_test_count_get_block;
   for (int i = 1; i <= 2; i ++)
   {
     if (2 == i)
     {
-      // "Actually, a single block will contain the whole file's content in most cases, but you can't rely
-      //  on that while writing your code. For very big files YARA could eventually split the file into
-      //  two or more blocks, and your module should be prepared to handle that." [1]
+      // "Actually, a single block will contain the whole file's content in most cases, but you
+      //  can't rely on that while writing your code. For very big files YARA could eventually split
+      //  the file into two or more blocks, and your module should be prepared to handle that." [1]
       // [1] https://yara.readthedocs.io/en/stable/writingmodules.html#accessing-the-scanned-data
-      yr_test_mem_block_size = getenv("YR_TEST_MEM_BLOCK_SIZE") ? atoi(getenv("YR_TEST_MEM_BLOCK_SIZE")) : 1024;
-      yr_test_mem_block_size_overlap = getenv("YR_TEST_MEM_BLOCK_SIZE_OVERLAP") ? atoi(getenv("YR_TEST_MEM_BLOCK_SIZE_OVERLAP")) : 256;
+      yr_test_mem_block_size = getenv("YR_TEST_MEM_BLOCK_SIZE") ?
+        atoi(getenv("YR_TEST_MEM_BLOCK_SIZE")) : 1024;
+      yr_test_mem_block_size_overlap = getenv("YR_TEST_MEM_BLOCK_SIZE_OVERLAP") ?
+        atoi(getenv("YR_TEST_MEM_BLOCK_SIZE_OVERLAP")) : 256;
       assert(yr_test_mem_block_size_overlap <= yr_test_mem_block_size);
     }
 
-    YR_TEST_FPRINTF(1, stderr, "- // run all rule tests: pass %d: split data into blocks of max %'lu bytes (0 means single / unlimited block size; default) with %'lu bytes overlapping the previous block\n", i, yr_test_mem_block_size, yr_test_mem_block_size_overlap);
+    YR_DEBUG_FPRINTF(1, stderr, "- // run all rule tests: pass %d: "
+      "split data into blocks of max %'lu bytes "
+      "(0 means single / unlimited block size; default) "
+      "with %'lu bytes overlapping the previous block\n",
+      i, yr_test_mem_block_size, yr_test_mem_block_size_overlap);
 
     yr_test_count_get_block = 0;
 
@@ -2951,7 +2959,9 @@ int main(int argc, char** argv)
     test_time_module();
     test_performance_warnings();
 
-    YR_TEST_FPRINTF(1, stderr, "- // yr_test_count_get_block=%'lu is the number of times the above tests got a first or next block\n", yr_test_count_get_block);
+    YR_DEBUG_FPRINTF(1, stderr, "- // yr_test_count_get_block=%'lu "
+      "is the number of times the above tests got a first or next block\n",
+      yr_test_count_get_block);
 
     if (2 == i)
       assert(yr_test_count_get_block > last_yr_test_count_get_block);

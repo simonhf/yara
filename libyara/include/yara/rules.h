@@ -86,7 +86,7 @@ YR_API int yr_rules_scan_mem_blocks(
     int timeout);
 
 
-YR_API int yr_rules_scan_mem(
+YR_API int (*yr_rules_scan_mem)(
     YR_RULES* rules,
     const uint8_t* buffer,
     size_t buffer_size,

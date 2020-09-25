@@ -73,15 +73,11 @@ static struct yr_config_var
 uint8_t yr_lowercase[256];
 uint8_t yr_altercase[256];
 
-uint64_t yr_test_mem_block_size = 0;
-uint64_t yr_test_mem_block_size_overlap = 0;
-uint64_t yr_test_count_get_block = 0;
-
-#if 0 == YR_TEST_VERBOSITY
+#if 0 == YR_DEBUG_VERBOSITY
 
 #else
 
-uint64_t yr_test_verbosity = YR_TEST_VERBOSITY;
+uint64_t yr_debug_verbosity = YR_DEBUG_VERBOSITY;
 
 #endif
 

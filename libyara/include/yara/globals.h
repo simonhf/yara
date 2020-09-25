@@ -39,32 +39,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern uint8_t yr_lowercase[256];
 extern uint8_t yr_altercase[256];
 
-// Default is 0 for production, which means use 1 block for contiguous memory.
-// For testing, 1024 means split contiguous memory into max 1024 byte blocks.
-// See https://github.com/VirusTotal/yara/issues/1356
-extern uint64_t yr_test_mem_block_size;
+#if 0 == YR_DEBUG_VERBOSITY
 
-// If yr_test_mem_block_size is non-zero, this specifies the bytes of the
-// previous memory block to include in the current memory block.
-extern uint64_t yr_test_mem_block_size_overlap;
-
-// Counts calls to 'get first / next block' function for testing purposes.
-extern uint64_t yr_test_count_get_block;
-
-#if 0 == YR_TEST_VERBOSITY
-
-#define YR_TEST_FPRINTF(VERBOSITY, FORMAT, ...)
+#define YR_DEBUG_FPRINTF(VERBOSITY, FORMAT, ...)
 
 #else
 
-#define YR_TEST_FPRINTF(VERBOSITY, FORMAT, ...) \
-  if (yr_test_verbosity >= VERBOSITY) \
+#define YR_DEBUG_FPRINTF(VERBOSITY, FORMAT, ...) \
+  if (yr_debug_verbosity >= VERBOSITY) \
   { \
       fprintf(FORMAT, __VA_ARGS__); \
   }
 
 // Default is 0 for production, which means be silent, else verbose.
-extern uint64_t yr_test_verbosity;
+extern uint64_t yr_debug_verbosity;
 
 #endif
 
