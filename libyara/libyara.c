@@ -119,6 +119,8 @@ static void _locking_function(
 
 YR_API int yr_initialize(void)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
+
   uint32_t def_stack_size = DEFAULT_STACK_SIZE;
   uint32_t def_max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
   uint32_t def_max_match_data = DEFAULT_MAX_MATCH_DATA;
@@ -197,6 +199,8 @@ YR_API int yr_initialize(void)
 
 YR_API int yr_finalize(void)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
+
   #if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
   int i;
   #endif

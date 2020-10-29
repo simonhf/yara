@@ -210,22 +210,38 @@ YR_API int yr_rules_scan_mem(
     int timeout)
 {
   YR_DEBUG_FPRINTF(2, stderr,
-      "+ %s(buffer=%p buffer_size=%zu timeout=%d) {}\n",
+      "+ %s(buffer=%p buffer_size=%zu timeout=%d) {\n",
       __FUNCTION__, buffer, buffer_size, timeout);
 
-  YR_SCANNER* scanner;
   int result;
 
-  FAIL_ON_ERROR(yr_scanner_create(rules, &scanner));
+  if (yr_scanner_existing)
+  {
+    yr_scanner_employed = yr_scanner_existing;
+    YR_DEBUG_FPRINTF(2, stderr, "- yr_scanner_employed=%p (existing) // %s()\n", yr_scanner_employed, __FUNCTION__);
+  }
+  else
+  {
+    FAIL_ON_ERROR(yr_scanner_create(rules, &yr_scanner_employed));
+    YR_DEBUG_FPRINTF(2, stderr, "- yr_scanner_employed=%p (new) // %s()\n", yr_scanner_employed, __FUNCTION__);
 
-  yr_scanner_set_callback(scanner, callback, user_data);
-  yr_scanner_set_timeout(scanner, timeout);
-  yr_scanner_set_flags(scanner, flags);
+    yr_scanner_set_callback(yr_scanner_employed, callback, user_data);
+    yr_scanner_set_timeout(yr_scanner_employed, timeout);
+    yr_scanner_set_flags(yr_scanner_employed, flags);
+  }
 
-  result = yr_scanner_scan_mem(scanner, buffer, buffer_size);
+  result = yr_scanner_scan_mem(yr_scanner_employed, buffer, buffer_size);
 
-  yr_scanner_destroy(scanner);
+  if (ERROR_BLOCK_NOT_READY != result)
+  {
+    yr_scanner_destroy(yr_scanner_employed);
+  }
 
+  YR_DEBUG_FPRINTF(2, stderr, "} = %d AKA %s // %s()\n",
+      result,
+      ERROR_SUCCESS         == result ? "ERROR_SUCCESS"         :
+      ERROR_BLOCK_NOT_READY == result ? "ERROR_BLOCK_NOT_READY" : "ERROR_?",
+      __FUNCTION__);
   return result;
 }
 
@@ -536,6 +552,8 @@ YR_API int yr_rules_get_stats(
 YR_API int yr_rules_destroy(
     YR_RULES* rules)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
+
   YR_EXTERNAL_VARIABLE* external = rules->externals_list_head;
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))

@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/error.h>
 #include <yara/mem.h>
 #include <yara/notebook.h>
+#include <yara/globals.h>
 
 
 // Forward declaration of YR_NOTEBOOK_PAGE.
@@ -79,6 +80,8 @@ int yr_notebook_create(
     size_t page_size,
     YR_NOTEBOOK** pool)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(page_size=%zu) {}\n", __FUNCTION__, page_size);
+
   YR_NOTEBOOK* new_notebook = yr_malloc(sizeof(YR_NOTEBOOK));
 
   if (new_notebook == NULL)
@@ -107,6 +110,8 @@ int yr_notebook_create(
 int yr_notebook_destroy(
     YR_NOTEBOOK* pool)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
+
   YR_NOTEBOOK_PAGE* page = pool->page_list_head;
 
   while (page != NULL)

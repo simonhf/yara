@@ -51,6 +51,8 @@ int warnings;
 
 uint64_t yr_test_mem_block_size = 0;
 uint64_t yr_test_mem_block_size_overlap = 0;
+int64_t  yr_test_mem_block_not_ready_if_zero = -1;
+int64_t  yr_test_mem_block_not_ready_if_zero_init_value = -1;
 uint64_t yr_test_count_get_block = 0;
 
 
@@ -86,8 +88,15 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
   uint64_t overlap;
 
   yr_test_count_get_block ++;
+  yr_test_mem_block_not_ready_if_zero --;
 
-  if (0 == context->current_block.size) {
+  if (yr_test_mem_block_not_ready_if_zero == 0)
+  {
+    overlap = 0;
+    result = NULL;
+  }
+  else if (0 == context->current_block.size)
+  {
     overlap = 0;
     context->current_block.size =
       (context->buffer_size < yr_test_mem_block_size) ?
@@ -95,7 +104,8 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
        yr_test_mem_block_size;
     result = &context->current_block;
   }
-  else {
+  else
+  {
     overlap = yr_test_mem_block_size_overlap;
     context->current_block.base +=
       (0 == context->current_block.base) ?
@@ -112,6 +122,10 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
         context->buffer_size - context->current_block.base + overlap :
         yr_test_mem_block_size + overlap;
     context->current_block.base -= overlap;
+
+    if (result == NULL)
+      yr_test_mem_block_not_ready_if_zero = -1; // never report block not ready because end of blocks
+
   }
 
   YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} = %p // "
@@ -132,6 +146,16 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
 static YR_MEMORY_BLOCK* _yr_test_multi_block_get_first_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
+  if (yr_test_mem_block_not_ready_if_zero == 0)
+  {
+    YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} = NULL // yr_test_mem_block_not_ready_if_zero=0\n",
+        __FUNCTION__);
+    yr_test_mem_block_not_ready_if_zero = yr_test_mem_block_not_ready_if_zero_init_value;
+    return NULL;
+  }
+
+  yr_test_mem_block_not_ready_if_zero = yr_test_mem_block_not_ready_if_zero_init_value;
+
   YR_DEBUG_FPRINTF(2, stderr,
       "+ %s() {} // wrapping _yr_test_multi_block_get_next_block()\n",
       __FUNCTION__);
@@ -173,46 +197,95 @@ YR_API int _yr_test_single_or_multi_block_scan_mem(
     const uint8_t* buffer,
     size_t buffer_size)
 {
-  YR_MEMORY_BLOCK block;
-  YR_MEMORY_BLOCK_ITERATOR iterator;
-  YR_PROC_ITERATOR_CTX context;
+  int result;
 
   scanner->file_size = buffer_size;
 
-  if (yr_test_mem_block_size)
-  {
-    YR_DEBUG_FPRINTF(2, stderr,
-      "+ %s(buffer=%p buffer_size=%zu) {}"
+  YR_DEBUG_FPRINTF(2, stderr,
+      "+ %s(buffer=%p buffer_size=%zu) {"
       " // yr_test_mem_block_size=%" PRId64 "\n",
        __FUNCTION__,
        buffer,
        buffer_size,
        yr_test_mem_block_size);
 
-    context.buffer = buffer;
-    context.buffer_size = buffer_size;
-    context.current_block.base = 0;
-    context.current_block.size = 0;
-    context.current_block.context = &context;
-    context.current_block.fetch_data = _yr_test_multi_block_fetch_block_data;
-
-    iterator.context = &context;
-    iterator.first = _yr_test_multi_block_get_first_block;
-    iterator.next = _yr_test_multi_block_get_next_block;
+  if (scanner->addr_iterator != NULL)
+  {
+    YR_DEBUG_FPRINTF(2, stderr, "- ->addr_iterator=%p (existing) // %s()\n",
+        scanner->addr_iterator, __FUNCTION__);
   }
   else
   {
-    block.size = buffer_size;
-    block.base = 0;
-    block.fetch_data = _yr_test_single_block_fetch_block_data;
-    block.context = (void*) buffer;
+    scanner->addr_iterator = (YR_MEMORY_BLOCK_ITERATOR*) yr_calloc(1, sizeof(YR_MEMORY_BLOCK_ITERATOR));
+    YR_DEBUG_FPRINTF(2, stderr, "- ->addr_iterator=%p (new) // %s()\n",
+        scanner->addr_iterator, __FUNCTION__);
 
-    iterator.context = &block;
-    iterator.first = _yr_test_single_block_get_first_block;
-    iterator.next = _yr_test_single_block_get_next_block;
+    if (scanner->addr_iterator == NULL)
+    {
+      result = ERROR_INSUFFICIENT_MEMORY;
+      goto _exit;
+    }
+
+    if (yr_test_mem_block_size)
+    {
+      scanner->addr_context = (YR_PROC_ITERATOR_CTX*) yr_calloc(1, sizeof(YR_PROC_ITERATOR_CTX));
+
+      if (scanner->addr_context == NULL)
+      {
+        result = ERROR_INSUFFICIENT_MEMORY;
+        goto _exit;
+      }
+
+      scanner->addr_context->buffer = buffer;
+      scanner->addr_context->buffer_size = buffer_size;
+      scanner->addr_context->current_block.base = 0;
+      scanner->addr_context->current_block.size = 0;
+      scanner->addr_context->current_block.context = scanner->addr_context;
+      scanner->addr_context->current_block.fetch_data = _yr_test_multi_block_fetch_block_data;
+
+      scanner->addr_iterator->context = scanner->addr_context;
+      scanner->addr_iterator->first = _yr_test_multi_block_get_first_block;
+      scanner->addr_iterator->next = _yr_test_multi_block_get_next_block;
+    }
+    else
+    {
+      scanner->addr_block = (YR_MEMORY_BLOCK*) yr_calloc(1, sizeof(YR_MEMORY_BLOCK));
+
+      if (scanner->addr_block == NULL)
+      {
+        result = ERROR_INSUFFICIENT_MEMORY;
+        goto _exit;
+      }
+
+      scanner->addr_block->size = buffer_size;
+      scanner->addr_block->base = 0;
+      scanner->addr_block->fetch_data = _yr_test_single_block_fetch_block_data;
+      scanner->addr_block->context = (void*) buffer;
+
+      scanner->addr_iterator->context = scanner->addr_block;
+      scanner->addr_iterator->first = _yr_test_single_block_get_first_block;
+      scanner->addr_iterator->next = _yr_test_single_block_get_next_block;
+    }
   }
 
-  return yr_scanner_scan_mem_blocks(scanner, &iterator);
+  result = yr_scanner_scan_mem_blocks(scanner, scanner->addr_iterator);
+
+  _exit:
+
+  if (ERROR_BLOCK_NOT_READY != result)
+  {
+    if (scanner->addr_iterator) yr_free(scanner->addr_iterator);
+    if (scanner->addr_context ) yr_free(scanner->addr_context );
+    if (scanner->addr_block   ) yr_free(scanner->addr_block   );
+  }
+
+  YR_DEBUG_FPRINTF(2, stderr, "} = %d AKA %s // %s()\n",
+      result,
+      ERROR_SUCCESS             == result ? "ERROR_SUCCESS"             :
+      ERROR_INSUFFICIENT_MEMORY == result ? "ERROR_INSUFFICIENT_MEMORY" :
+      ERROR_BLOCK_NOT_READY     == result ? "ERROR_BLOCK_NOT_READY"     : "ERROR_?",
+      __FUNCTION__);
+  return result;
 }
 
 
@@ -302,6 +375,8 @@ int compile_rule(
     char* string,
     YR_RULES** rules)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
+
   YR_COMPILER* compiler = NULL;
   int result = ERROR_SUCCESS;
 
@@ -330,20 +405,14 @@ _exit:
 }
 
 
-typedef struct SCAN_CALLBACK_CTX SCAN_CALLBACK_CTX;
-
-struct SCAN_CALLBACK_CTX {
-  int matches;
-  void* module_data;
-  size_t module_data_size;
-};
-
-static int _scan_callback(
+int _scan_callback(
     YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
+
   SCAN_CALLBACK_CTX* ctx =  (SCAN_CALLBACK_CTX*) user_data;
   YR_MODULE_IMPORT* mi;
 
@@ -370,6 +439,8 @@ int matches_blob(
     uint8_t* module_data,
     size_t module_data_size)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(blob_size=%zu) {\n", __FUNCTION__, blob_size);
+
   YR_RULES* rules;
 
   if (blob == NULL)
@@ -390,8 +461,13 @@ int matches_blob(
     .module_data_size = module_data_size,
   };
 
+  _again:;
+
   int scan_result = yr_rules_scan_mem(
       rules, blob, blob_size, SCAN_FLAGS_NO_TRYCATCH, _scan_callback, &ctx, 0);
+
+  if (scan_result == ERROR_BLOCK_NOT_READY)
+    goto _again;
 
   if (scan_result != ERROR_SUCCESS)
   {
@@ -401,6 +477,7 @@ int matches_blob(
 
   yr_rules_destroy(rules);
 
+  YR_DEBUG_FPRINTF(2, stderr, "} = %u AKA ctx.matches // %s()\n", ctx.matches, __FUNCTION__);
   return ctx.matches;
 }
 
