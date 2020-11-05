@@ -3038,10 +3038,14 @@ int main(int argc, char** argv)
 
   uint64_t last_yr_test_count_get_block;
 
-  for (int i = 1; i <= 2; i ++)
+  for (int pass = 1; pass <= 3; pass ++)
   {
-    if (2 == i)
-    {
+    switch (pass) {
+    case 1:
+      // Single block: Default; a single block will contain the whole file content.
+      break;
+    case 2:
+      // Multi block, never blocking:
       // "Actually, a single block will contain the whole file's content in most cases, but you
       //  can't rely on that while writing your code. For very big files YARA could eventually split
       //  the file into two or more blocks, and your module should be prepared to handle that." [1]
@@ -3051,13 +3055,18 @@ int main(int argc, char** argv)
       yr_test_mem_block_size_overlap = getenv("YR_TEST_MEM_BLOCK_SIZE_OVERLAP") ?
         atoi(getenv("YR_TEST_MEM_BLOCK_SIZE_OVERLAP")) : 256;
       assert(yr_test_mem_block_size_overlap <= yr_test_mem_block_size);
+      break;
+    case 3:
+      // Multi block, always blocking: Iterator returns ERROR_BLOCK_NOT_READY after each block.
+      yr_test_mem_block_not_ready_if_zero_init_value = 2; // get next block, but block block after :-)
+      break;
     }
 
     YR_DEBUG_FPRINTF(1, stderr, "- // run all rule tests: pass %d: "
         "split data into blocks of max %" PRId64 " bytes "
         "(0 means single / unlimited block size; default) "
         "with %" PRId64 " bytes overlapping the previous block\n",
-        i, yr_test_mem_block_size, yr_test_mem_block_size_overlap);
+        pass, yr_test_mem_block_size, yr_test_mem_block_size_overlap);
 
     yr_test_count_get_block = 0;
 
@@ -3101,7 +3110,10 @@ int main(int argc, char** argv)
     #endif
 
     #if defined(HASH_MODULE)
-    test_hash_module();
+    if (pass <= 2) // todo: tweak hash module to work with ERROR_BLOCK_NOT_READY
+    {
+      test_hash_module();
+    }
     #endif
 
     test_time_module();
@@ -3111,7 +3123,7 @@ int main(int argc, char** argv)
         " is the number of times the above tests got a first or next block\n",
         yr_test_count_get_block);
 
-    if (2 == i)
+    if (pass >= 2)
       assert(yr_test_count_get_block > last_yr_test_count_get_block);
 
     last_yr_test_count_get_block = yr_test_count_get_block;

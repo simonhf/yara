@@ -175,8 +175,21 @@ static void _yr_scanner_clean_matches(
 
 // note: caller supplied yr_scanner_* will not work with multiple threads.
 // todo: consider defining yr_scanner_* as thread local storage to work with multiple threads?
-YR_SCANNER* yr_scanner_existing = NULL;
-YR_SCANNER* yr_scanner_employed;
+YR_TLS YR_SCANNER* yr_scanner_instance_existing = NULL;
+YR_TLS YR_SCANNER* yr_scanner_instance_employed;
+
+
+YR_API void yr_scanner_instance_behind_the_scenes_set(
+    YR_SCANNER* scanner_instance)
+{
+  yr_scanner_instance_existing = scanner_instance;
+}
+
+
+YR_API YR_SCANNER* yr_scanner_instance_behind_the_scenes_get(void)
+{
+  return yr_scanner_instance_employed;
+}
 
 
 YR_API int yr_scanner_create(
@@ -506,14 +519,14 @@ YR_API int yr_scanner_scan_mem_blocks(
   YR_MEMORY_BLOCK* block_not_ready = iterator->first(iterator);
   if (block_not_ready == NULL)
   {
-    yr_scanner_existing = yr_scanner_employed;
+    yr_scanner_instance_existing = yr_scanner_instance_employed;
     result = ERROR_BLOCK_NOT_READY;
   }
   else
   {
     YR_DEBUG_FPRINTF(2, stderr, "- last block; finishing up // %s()\n", __FUNCTION__);
 
-    yr_scanner_existing = NULL;
+    yr_scanner_instance_existing = NULL;
 
     YR_TRYCATCH(
       !(scanner->flags & SCAN_FLAGS_NO_TRYCATCH),

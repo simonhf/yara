@@ -539,6 +539,8 @@ int capture_string(
     char* string,
     char* expected_string)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {\n", __FUNCTION__);
+
   YR_RULES* rules;
 
   if (compile_rule(rule, &rules) != ERROR_SUCCESS)
@@ -552,15 +554,23 @@ int capture_string(
   f.found = 0;
   f.expected = expected_string;
 
-  if (yr_rules_scan_mem(rules, (uint8_t*)string, strlen(string), 0,
-                        capture_matches, &f, 0) != ERROR_SUCCESS)
+  _again:;
+
+  int scan_result = yr_rules_scan_mem(
+      rules, (uint8_t*)string, strlen(string), 0, capture_matches, &f, 0);
+
+  if (scan_result == ERROR_BLOCK_NOT_READY)
+    goto _again;
+
+  if (scan_result != ERROR_SUCCESS)
   {
-    fprintf(stderr, "yr_rules_scan_mem: error\n");
+    fprintf(stderr, "%s:%d: yr_rules_scan_mem: error: %d\n", __FILE__, __LINE__, scan_result);
     exit(EXIT_FAILURE);
   }
 
   yr_rules_destroy(rules);
 
+  YR_DEBUG_FPRINTF(2, stderr, "} = %u AKA f.found // %s()\n", f.found, __FUNCTION__);
   return f.found;
 }
 

@@ -215,26 +215,28 @@ YR_API int yr_rules_scan_mem(
 
   int result;
 
-  if (yr_scanner_existing)
+  if (yr_scanner_instance_existing)
   {
-    yr_scanner_employed = yr_scanner_existing;
-    YR_DEBUG_FPRINTF(2, stderr, "- yr_scanner_employed=%p (existing) // %s()\n", yr_scanner_employed, __FUNCTION__);
+    yr_scanner_instance_employed = yr_scanner_instance_existing;
+    YR_DEBUG_FPRINTF(2, stderr, "- yr_scanner_instance_employed=%p (existing) // %s()\n",
+        yr_scanner_instance_employed, __FUNCTION__);
   }
   else
   {
-    FAIL_ON_ERROR(yr_scanner_create(rules, &yr_scanner_employed));
-    YR_DEBUG_FPRINTF(2, stderr, "- yr_scanner_employed=%p (new) // %s()\n", yr_scanner_employed, __FUNCTION__);
+    FAIL_ON_ERROR(yr_scanner_create(rules, &yr_scanner_instance_employed));
+    YR_DEBUG_FPRINTF(2, stderr, "- yr_scanner_instance_employed=%p (new) // %s()\n",
+        yr_scanner_instance_employed, __FUNCTION__);
 
-    yr_scanner_set_callback(yr_scanner_employed, callback, user_data);
-    yr_scanner_set_timeout(yr_scanner_employed, timeout);
-    yr_scanner_set_flags(yr_scanner_employed, flags);
+    yr_scanner_set_callback(yr_scanner_instance_employed, callback, user_data);
+    yr_scanner_set_timeout(yr_scanner_instance_employed, timeout);
+    yr_scanner_set_flags(yr_scanner_instance_employed, flags);
   }
 
-  result = yr_scanner_scan_mem(yr_scanner_employed, buffer, buffer_size);
+  result = yr_scanner_scan_mem(yr_scanner_instance_employed, buffer, buffer_size);
 
   if (ERROR_BLOCK_NOT_READY != result)
   {
-    yr_scanner_destroy(yr_scanner_employed);
+    yr_scanner_destroy(yr_scanner_instance_employed);
   }
 
   YR_DEBUG_FPRINTF(2, stderr, "} = %d AKA %s // %s()\n",

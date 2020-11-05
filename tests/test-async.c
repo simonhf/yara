@@ -63,7 +63,7 @@ static void test_parallel_triple_scan(
   int                       scan_complete_loops[PARALLEL_SCANS];
   char*                                    text[PARALLEL_SCANS];
   size_t                               len_text[PARALLEL_SCANS];
-  YR_SCANNER*                  scanner_employed[PARALLEL_SCANS];
+  YR_SCANNER*         scanner_instance_employed[PARALLEL_SCANS];
   int               mem_block_not_ready_if_zero[PARALLEL_SCANS];
   int                         scan_not_complete[PARALLEL_SCANS];
   SCAN_CALLBACK_CTX                         ctx[PARALLEL_SCANS] = {
@@ -79,7 +79,7 @@ static void test_parallel_triple_scan(
   for (int i = 0; i < PARALLEL_SCANS; i ++)
   {
     mem_block_not_ready_if_zero[i] = yr_test_mem_block_not_ready_if_zero_init_value;
-    scanner_employed[i] = NULL;
+    scanner_instance_employed[i] = NULL;
     len_text[i] = strlen(text[i]);
     scan_not_complete[i] = 1;
     scan_complete_loops[i] = 0;
@@ -96,25 +96,32 @@ static void test_parallel_triple_scan(
           "- loop=%d i=%d strlen(text[i])=%ld ctx[i].matches=%d scan_not_complete[i]=%d // %s()\n",
           loop, i, len_text[i], ctx[i].matches, scan_not_complete[i], __FUNCTION__);
 
-      yr_test_mem_block_not_ready_if_zero = mem_block_not_ready_if_zero[i];
-      yr_scanner_existing = scanner_employed[i];
-
       if (scan_not_complete[i])
       {
         total_scans_not_complete ++;
 
+        // Give yr_rules_scan_mem() call tree special instructions RE which scanner instance to use.
+        yr_scanner_instance_behind_the_scenes_set(scanner_instance_employed[i]);
+        yr_test_mem_block_not_ready_if_zero = mem_block_not_ready_if_zero[i];
+
+        // Via yr_scanner_instance_behind_the_scenes_set() if scanner_instance_employed[i] is NULL
+        // yr_rules_scan_mem() creates a brand new scanner instance, else re-uses scanner instance.
         int scan_result = yr_rules_scan_mem(
             rules, (uint8_t*) text[i], len_text[i], SCAN_FLAGS_NO_TRYCATCH, _scan_callback, &ctx[i], 0);
 
-        mem_block_not_ready_if_zero[i] = yr_test_mem_block_not_ready_if_zero;
-        scanner_employed[i] = yr_scanner_employed;
-
+        // yr_scanner_instance_behind_the_scenes_xxx() due to iterator returning ERROR_BLOCK_NOT_READY.
         if (scan_result == ERROR_BLOCK_NOT_READY)
+        {
+          // Scanner blocked, so remember scanner instance that yr_rules_scan_mem() call tree used.
+          scanner_instance_employed[i] = yr_scanner_instance_behind_the_scenes_get();
+          mem_block_not_ready_if_zero[i] = yr_test_mem_block_not_ready_if_zero;
+
           continue;
+        }
 
         if (scan_result != ERROR_SUCCESS)
         {
-          fprintf(stderr, "yr_rules_scan_mem: error: %d\n", scan_result);
+          fprintf(stderr, "%s:%d: yr_rules_scan_mem: error: %d\n", __FILE__, __LINE__, scan_result);
           exit(EXIT_FAILURE);
         }
 
@@ -169,6 +176,11 @@ static void test_parallel_strings()
   // - Scan block 2 of text string 1, scan block 2 of text string 2, scan block 2 of text string 3.
   // - And so on, until rule is fulfilled.
   // - Finally assert on match count, and expected number of loops for each text string.
+  //
+  // Note: In the real world subsequent blocks for a text string must come in order, but the text
+  // strings themselves may be processed in any order, e.g.:
+  // - Scan block 1 of text string 2, scan block 1 of text string 1, scan block 1 of text string 3.
+  // - Scan block 2 of text string 3, scan block 2 of text string 2, scan block 2 of text string 1.
 
   yr_test_mem_block_not_ready_if_zero_init_value = 2; // get next block, but block block after :-)
 

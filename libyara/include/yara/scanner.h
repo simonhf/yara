@@ -38,8 +38,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 typedef YR_SCAN_CONTEXT YR_SCANNER;
 
 
-extern YR_SCANNER* yr_scanner_existing;
-extern YR_SCANNER* yr_scanner_employed;
+extern YR_TLS YR_SCANNER* yr_scanner_instance_existing;
+extern YR_TLS YR_SCANNER* yr_scanner_instance_employed;
+
+
+YR_API void yr_scanner_instance_behind_the_scenes_set(
+    YR_SCANNER* scanner_instance);
+
+
+YR_API YR_SCANNER* yr_scanner_instance_behind_the_scenes_get(
+    void);
 
 
 YR_API int yr_scanner_create(
